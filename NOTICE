@@ -11,12 +11,3 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-
-===============================================================================
-Dependencies:
-
-python-registry:
-* LICENSE:
-  * http://www.apache.org/licenses/LICENSE-2.0 (Apache License 2.0)
-* HOMEPAGE:
-  * https://github.com/williballenthin/python-registry

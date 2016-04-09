@@ -4,7 +4,3 @@ wrenet is network configurations viewer in the Windows Registry and licensed und
 ```
 pip install git+https://github.com/graypawn/wrenet
 ```
-# Usage
-```
-wrenet [windows mount point]
-```

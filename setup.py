@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
+from wrenet import __version__
 from setuptools import setup, find_packages
 
 setup(
     name='wrenet',
-    version='0.1',
+    version=__version__,
     description='Network configurations viewer in the Windows Registry',
     author='graypawn',
     author_email='choi.pawn' '@gmail.com',
@@ -18,7 +19,7 @@ setup(
                    "License :: OSI Approved :: Apache Software License"],
     entry_points={
         'console_scripts': [
-            'wrenet=wrenet.wrenet:main'
+            'wrenet=wrenet.__main__:main'
         ]
     }
 )

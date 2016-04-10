@@ -18,6 +18,7 @@
 import argparse
 import wrenet
 import Registry
+import struct
 from wrenet.wrenet import Interface
 
 
@@ -36,8 +37,11 @@ def main():
         args.directory = args.directory + "/Windows/System32/config"
     try:
         Interface(args.directory).print_all()
-    except Registry.RegistryParse.ParseException as e:
-        print("%s: %s: Invalid registry file" % (parser.prog, args.path))
+    except (Registry.RegistryParse.ParseException,
+            Registry.Registry.RegistryKeyNotFoundException,
+            struct.error):
+        print("%s: %s: Directory included an invalid registry"
+              % (parser.prog, args.directory))
     except Exception as e:
         print("%s: %s: %s" % (parser.prog, args.directory, e.args[1]))
 

@@ -18,30 +18,28 @@
 import argparse
 import wrenet
 import Registry
-from wrenet.wrenet import get_interfaces
+from wrenet.wrenet import Interface
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('path', help='Windows system registry file')
+parser.add_argument('directory',
+                    help='The directory included Windows system registry')
 parser.add_argument('--version', action='version',
                     version='%(prog)s ' + wrenet.__version__)
 parser.add_argument('-r', '--root', action='store_true',
-                    help='Use the Windows mount point as path')
+                    help='Use the Windows mount point as directory')
 args = parser.parse_args()
 
 
 def main():
     if args.root == True:
-        args.path = args.path + "/Windows/System32/config/SYSTEM"
+        args.directory = args.directory + "/Windows/System32/config"
     try:
-        interfaces = get_interfaces(args.path)
-        for interface in interfaces:
-            interface.print_all()
-            print()
+        Interface(args.directory).print_all()
     except Registry.RegistryParse.ParseException as e:
         print("%s: %s: Invalid registry file" % (parser.prog, args.path))
     except Exception as e:
-        print("%s: %s: %s" % (parser.prog, args.path, e.args[1]))
+        print("%s: %s: %s" % (parser.prog, args.directory, e.args[1]))
 
 
 if __name__ == "__main__":

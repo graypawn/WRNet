@@ -17,16 +17,27 @@
 
 from Registry import Registry
 
-
 class Interface:
-    def __init__(self, _interface):
-        self.data = _interface
+    def __init__(self, directory):
+        software = Registry.Registry(directory + "/SOFTWARE")
+        networkcards =  software.open(
+            "Microsoft\\Windows NT\\CurrentVersion\\NetworkCards")
+
+        ## Warring : networkcard가 한 개라 가정해고 있다.
+        guid = networkcards.subkeys()[0].value("ServiceName").value()
+
+        system = Registry.Registry(directory + "/SYSTEM")
+        select = system.open("Select")
+        current = select.value("Current").value()
+        self.__subkeys = system.open(
+            "ControlSet00%d\Services\Tcpip\Parameters\Interfaces\%s"
+            % (current, guid))
 
     def value(self, name):
         try:
-            return self.data.value(name).value()[0]
+            return self.__subkeys.value(name).value()[0]
         except IndexError:
-            return self.data.value(name).value()
+            return self.__subkeys.value(name).value()
         except Registry.RegistryValueNotFoundException:
             pass
         except Registry.RegistryParse.RegistryStructureDoesNotExist:
@@ -37,12 +48,3 @@ class Interface:
         print("Subnet Mask: %s" % self.value("SubnetMask"))
         print("Gateway: %s" % self.value("DefaultGateway"))
         print("Name Server: %s" % self.value("NameServer"))
-
-
-def get_interfaces(filename):
-    registry = Registry.Registry(filename)
-    select = registry.open("Select")
-    current = select.value("Current").value()
-    interfaces = registry.open(
-        "ControlSet00%d\Services\Tcpip\Parameters\Interfaces" % (current))
-    return map(lambda x: Interface(x) ,interfaces.subkeys())

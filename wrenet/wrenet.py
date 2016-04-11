@@ -54,9 +54,9 @@ class Interface:
 
     def printItems(self):
         if self.enable_dhcp:
-            print("IPAdress: DHCP")
+            print("IP Adress: DHCP")
         else:
-            print("IPAddress: %s" % self.value("IPAddress"))
+            print("IP Address: %s" % self.value("IPAddress"))
             print("Subnet Mask: %s" % self.value("SubnetMask"))
             print("Gateway: %s" % self.value("DefaultGateway"))
             print("Name Server: %s" % self.value("NameServer"))

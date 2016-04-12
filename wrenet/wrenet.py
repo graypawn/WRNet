@@ -31,49 +31,53 @@ def getGUIDs(filename):
 class Interface:
     def __init__(self, data):
         self.data = data
-        self.check = (True if self.data.values() else False)
-
-        if self.check:
-            if self.data.value("EnableDHCP").value() is 1:
-                self.enable_dhcp = True
-            else:
-                self.enable_dhcp = False
-
-    def value(self, name):
-        if self.check:
-            if not self.enable_dhcp:
-                value_wrap = self.data.value(name)
-                if value_wrap.value_type() is 7:
-                    return value_wrap.value()[0]
-                else:
-                    return value_wrap.value()
-            else:
-                return None
-        else:
-            return None
 
     def printItems(self):
-        if self.enable_dhcp:
-            print("IP Adress: DHCP")
+        pass
+
+
+class StaticInterface(Interface):
+    enable_dhcp = False
+
+    def value(self, name):
+        value_wrap = Interface.data.value(name)
+        if value_wrap.value_type() is 7:
+            return value_wrap.value()[0]
         else:
-            print("IP Address: %s" % self.value("IPAddress"))
-            print("Subnet Mask: %s" % self.value("SubnetMask"))
-            print("Gateway: %s" % self.value("DefaultGateway"))
-            print("Name Server: %s" % self.value("NameServer"))
+            return value_wrap.value()
+
+    def printItems(self):
+        print("IP Address: %s" % self.value("IPAddress"))
+        print("Subnet Mask: %s" % self.value("SubnetMask"))
+        print("Gateway: %s" % self.value("DefaultGateway"))
+        print("Name Server: %s" % self.value("NameServer"))
+
+
+class DanamicInterface(Interface):
+    enable_dhcp = True
+
+    def printItems(self):
+        print("IP Adress: DHCP")
 
 
 class Interfaces:
     def __init__(self, directory):
-        system = Registry.Registry(directory + "/SYSTEM")
-        select = system.open("Select")
-        current = select.value("Current").value()
         self.path = directory
-        self.interfaces = system.open(
-            "ControlSet00%d\Services\Tcpip\Parameters\Interfaces" % (current))
         self.guids = getGUIDs(directory + "/SOFTWARE")
 
+    def values(self):
+        system = Registry.Registry(self.path + "/SYSTEM")
+        select = system.open("Select")
+        current = select.value("Current").value()
+        return system.open(
+            "ControlSet00%d\Services\Tcpip\Parameters\Interfaces" % (current))
+
     def getInterface(self, guid):
-        return Interface(self.interfaces.subkey(guid))
+        interface_data = self.values().subkey(guid)
+        if interface_data.value("EnableDHCP").value() is 1:
+            return DanamicInterface(interface_data)
+        else:
+            return StaticInterface(interface_data)
 
     def printAll(self):
         print()

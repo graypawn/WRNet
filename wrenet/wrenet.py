@@ -15,26 +15,49 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+import Registry
+import struct
 from Registry import Registry
+
+
+class InvalidRegistryFile(Exception):
+    """
+    Exception for invalid registry file.
+    """
+
+
+class InterfaceNotFoundException(Exception):
+    """
+    """
 
 
 def getGUIDs(filename):
     """
     Args:
     - filename (string): software registry of Windows OS.
+
     Returns:
     - list of string: a list of Network Adapter GUIDs.
+
+    Raise:
+    - InvalidRegistryFile if any invalid registry file name was givend.
     """
-    software = Registry.Registry(filename)
-    networkcards =  software.open(
-        "Microsoft\\Windows NT\\CurrentVersion\\NetworkCards")
-    guids = [x.value("ServiceName").value() for x in networkcards.subkeys()]
+    try:
+        software = Registry.Registry(filename)
+        networkcards =  software.open(
+            "Microsoft\\Windows NT\\CurrentVersion\\NetworkCards")
+        guids = [x.value("ServiceName").value() for x in networkcards.subkeys()]
+    except (Registry.RegistryParse.ParseException,
+            Registry.RegistryKeyNotFoundException,
+            struct.error):
+        raise InvalidRegistryFile("Invalid Software Registry File")
     return guids
 
 
 class Interface:
     """
     a class for network interface.
+
     Args:
     - data: a RegistryKey as a subkey of interfaces.
     """
@@ -51,6 +74,7 @@ class Interface:
 class InterfaceValue:
     """
     A class for values of Interface.
+
     Args:
     - value: a interface value as a RegistryValue.
     """
@@ -97,8 +121,9 @@ class DanamicInterface(Interface):
 class Interfaces:
     """
     A class for a network interfaces.
+
     Args:
-    - directory(string): the directory path included Windows registrys.
+    - directory (string): the directory path included Windows registrys.
     """
     def __init__(self, directory):
         self.path = directory
@@ -108,26 +133,43 @@ class Interfaces:
         """
         Return a RegistryKey of interfaces.
         """
-        system = Registry.Registry(self.path + "/SYSTEM")
-        select = system.open("Select")
-        current = select.value("Current").value()
+        filename = self.path + "/SYSTEM"
+        try:
+            system = Registry.Registry(filename)
+            select = system.open("Select")
+            current = select.value("Current").value()
+        except (Registry.RegistryParse.ParseException,
+                Registry.RegistryKeyNotFoundException,
+                struct.error):
+            raise InvalidRegistryFile("Invalid System Registry File")
         return system.open(
             "ControlSet00%d\Services\Tcpip\Parameters\Interfaces" % (current))
 
     def getInterface(self, guid):
         """
-        Return a Interface with a given GUID.
-        You can get a GUID from the self.guids.
+        Args:
+        - guid (string): a GUID in self.guids
+
+        Returns:
+        - a Interface with a given GUID.
+
+        Raises:
+        InterfaceNotFoundException if the subkey with the given GUID does
+        not exist.
         """
-        interface_data = self.values().subkey(guid)
+        try:
+            interface_data = self._values().subkey(guid)
+        except Registry.RegistryKeyNotFoundException:
+            raise InterfaceNotFoundException("Interface Not Found: %s" % guid)
         if interface_data.value("EnableDHCP").value() is 1:
             return DanamicInterface(interface_data)
         else:
             return StaticInterface(interface_data)
 
+
     def printAll(self):
         """
-        Print All Interfaces.
+        Print all interfaces.
         """
         print()
         for guid in self.guids:

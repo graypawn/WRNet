@@ -24,7 +24,7 @@ from wrenet.wrenet import Interfaces
 
 parser = argparse.ArgumentParser()
 parser.add_argument('directory',
-                    help='The directory included Windows system registry')
+                    help='The directory included Windows registrys')
 parser.add_argument('--version', action='version',
                     version='%(prog)s ' + wrenet.__version__)
 parser.add_argument('-r', '--root', action='store_true',

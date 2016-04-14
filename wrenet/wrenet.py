@@ -19,30 +19,61 @@ from Registry import Registry
 
 
 def getGUIDs(filename):
-    "SOFTWARE Registry을 filename으로 받는다."
+    """
+    Args:
+    - filename (string): software registry of Windows OS.
+    Returns:
+    - list of string: a list of Network Adapter GUIDs.
+    """
     software = Registry.Registry(filename)
     networkcards =  software.open(
         "Microsoft\\Windows NT\\CurrentVersion\\NetworkCards")
-    guids = list(map(lambda x: x.value("ServiceName").value(),
-                     networkcards.subkeys()))
+    guids = [x.value("ServiceName").value() for x in networkcards.subkeys()]
     return guids
 
 
 class Interface:
+    """
+    a class for network interface.
+    Args:
+    - data: a RegistryKey as a subkey of interfaces.
+    """
     def __init__(self, data):
         self.data = data
 
     def printItems(self):
+        """
+        Print a interface.
+        """
         pass
 
 
+class InterfaceValue:
+    """
+    A class for values of Interface.
+    Args:
+    - value: a interface value as a RegistryValue.
+    """
+    def __init__(self, value):
+        self._value = value
+
+    def __str__(self):
+        return ", ".join(filter(lambda x: x, self._value.value()))
+
+
 class StaticInterface(Interface):
+    """
+    A class for static network interface.
+    """
     enable_dhcp = False
 
     def value(self, name):
-        value_wrap = Interface.data.value(name)
+        """
+        Return a value with a given name as a InterfaceValue.
+        """
+        value_wrap = self.data.value(name)
         if value_wrap.value_type() is 7:
-            return value_wrap.value()[0]
+            return InterfaceValue(value_wrap)
         else:
             return value_wrap.value()
 
@@ -54,6 +85,9 @@ class StaticInterface(Interface):
 
 
 class DanamicInterface(Interface):
+    """
+    A class for DHCP network interface.
+    """
     enable_dhcp = True
 
     def printItems(self):
@@ -61,11 +95,19 @@ class DanamicInterface(Interface):
 
 
 class Interfaces:
+    """
+    A class for a network interfaces.
+    Args:
+    - directory(string): the directory path included Windows registrys.
+    """
     def __init__(self, directory):
         self.path = directory
         self.guids = getGUIDs(directory + "/SOFTWARE")
 
-    def values(self):
+    def _values(self):
+        """
+        Return a RegistryKey of interfaces.
+        """
         system = Registry.Registry(self.path + "/SYSTEM")
         select = system.open("Select")
         current = select.value("Current").value()
@@ -73,6 +115,10 @@ class Interfaces:
             "ControlSet00%d\Services\Tcpip\Parameters\Interfaces" % (current))
 
     def getInterface(self, guid):
+        """
+        Return a Interface with a given GUID.
+        You can get a GUID from the self.guids.
+        """
         interface_data = self.values().subkey(guid)
         if interface_data.value("EnableDHCP").value() is 1:
             return DanamicInterface(interface_data)
@@ -80,6 +126,9 @@ class Interfaces:
             return StaticInterface(interface_data)
 
     def printAll(self):
+        """
+        Print All Interfaces.
+        """
         print()
         for guid in self.guids:
             self.getInterface(guid).printItems()

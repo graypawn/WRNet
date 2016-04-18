@@ -120,7 +120,28 @@ class DanamicInterface(Interface):
 
 class Interfaces:
     """
-    A class for a network interfaces.
+    A class for network interfaces.
+
+    Args:
+    - data (list): list of interfaces.
+    """
+
+    def __init__(self, data=[]):
+        self._data = data
+
+    def printAll(self):
+        """
+        Print all interfaces.
+        """
+        print()
+        for interface in self._data:
+            interface.printItems()
+            print()
+
+
+class InterfaceRoot:
+    """
+    A class for a directory of network interfaces.
 
     Args:
     - directory (string): the directory path included Windows registrys.
@@ -145,7 +166,7 @@ class Interfaces:
         return system.open(
             "ControlSet00%d\Services\Tcpip\Parameters\Interfaces" % (current))
 
-    def getInterface(self, guid):
+    def item(self, guid):
         """
         Args:
         - guid (string): a GUID in self.guids
@@ -166,12 +187,12 @@ class Interfaces:
         else:
             return StaticInterface(interface_data)
 
-
-    def printAll(self):
+    def items(self, static=None):
         """
-        Print all interfaces.
+        Args:
+        - static (bool): if static is true, then return only static interfaces.
         """
-        print()
-        for guid in self.guids:
-            self.getInterface(guid).printItems()
-            print()
+        item_list = [self.item(guid) for guid in self.guids]
+        if static is True:
+            item_list = filter(lambda x: type(x) is StaticInterface, item_list);
+        return Interfaces(item_list);

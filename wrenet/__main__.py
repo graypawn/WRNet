@@ -17,16 +17,18 @@
 
 import argparse
 import wrenet
-from wrenet.wrenet import Interfaces
+from wrenet.wrenet import InterfaceRoot
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('directory',
-                    help='The directory included Windows registrys')
+                    help='the directory included Windows registrys')
 parser.add_argument('--version', action='version',
                     version='%(prog)s ' + wrenet.__version__)
 parser.add_argument('-r', '--root', action='store_true',
-                    help='Use the Windows mount point as directory')
+                    help='use the Windows mount point as directory')
+parser.add_argument('-s', '--static', action='store_true',
+                    help='list static interfaces')
 args = parser.parse_args()
 
 
@@ -34,7 +36,7 @@ def main():
     if args.root == True:
         args.directory = args.directory + "/Windows/System32/config"
     try:
-        Interfaces(args.directory).printAll()
+        InterfaceRoot(args.directory).items(args.static).printAll()
     except wrenet.wrenet.InvalidRegistryFile as e:
         print("%s: %s %s" % (parser.prog, args.directory, e.args[0]))
     except Exception as e:

@@ -3,4 +3,5 @@
 .#*
 *.pyc
 /build/
+/dist/
 /wrenet.egg-info/

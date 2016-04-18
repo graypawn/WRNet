@@ -19,7 +19,7 @@ import argparse
 import wrenet
 import Registry
 import struct
-from wrenet.wrenet import Interface
+from wrenet.wrenet import Interfaces
 
 
 parser = argparse.ArgumentParser()
@@ -36,7 +36,7 @@ def main():
     if args.root == True:
         args.directory = args.directory + "/Windows/System32/config"
     try:
-        Interface(args.directory).print_all()
+        Interfaces(args.directory).printAll()
     except (Registry.RegistryParse.ParseException,
             Registry.Registry.RegistryKeyNotFoundException,
             struct.error):

@@ -17,38 +17,66 @@
 
 from Registry import Registry
 
+
+def getGUIDs(filename):
+    "SOFTWARE Registry을 filename으로 받는다."
+    software = Registry.Registry(filename)
+    networkcards =  software.open(
+        "Microsoft\\Windows NT\\CurrentVersion\\NetworkCards")
+    guids = list(map(lambda x: x.value("ServiceName").value(),
+                     networkcards.subkeys()))
+    return guids
+
+
 class Interface:
-    def __init__(self, directory):
-        software = Registry.Registry(directory + "/SOFTWARE")
-        networkcards =  software.open(
-            "Microsoft\\Windows NT\\CurrentVersion\\NetworkCards")
+    def __init__(self, data):
+        self.data = data
+        self.check = (True if self.data.values() else False)
 
-        ## Warring : networkcard가 한 개라 가정해고 있다.
-        guid = networkcards.subkeys()[0].value("ServiceName").value()
-
-        system = Registry.Registry(directory + "/SYSTEM")
-        select = system.open("Select")
-        current = select.value("Current").value()
-        self.__subkeys = system.open(
-            "ControlSet00%d\Services\Tcpip\Parameters\Interfaces\%s"
-            % (current, guid))
-        self.check = (True if self.__subkeys.values() else False)
+        if self.check:
+            if self.data.value("EnableDHCP").value() is 1:
+                self.enable_dhcp = True
+            else:
+                self.enable_dhcp = False
 
     def value(self, name):
         if self.check:
-            try:
-                value_wrap = self.__subkeys.value(name)
-            except Registry.RegistryValueNotFoundException:
-                return None
-            if value_wrap.value_type() == 7:
-                return value_wrap.value()[0]
+            if not self.enable_dhcp:
+                value_wrap = self.data.value(name)
+                if value_wrap.value_type() is 7:
+                    return value_wrap.value()[0]
+                else:
+                    return value_wrap.value()
             else:
-                return value_wrap.value()
+                return None
         else:
             return None
 
-    def print_all(self):
-        print("IPAddress: %s" % self.value("IPAddress"))
-        print("Subnet Mask: %s" % self.value("SubnetMask"))
-        print("Gateway: %s" % self.value("DefaultGateway"))
-        print("Name Server: %s" % self.value("NameServer"))
+    def printItems(self):
+        if self.enable_dhcp:
+            print("IPAdress: DHCP")
+        else:
+            print("IPAddress: %s" % self.value("IPAddress"))
+            print("Subnet Mask: %s" % self.value("SubnetMask"))
+            print("Gateway: %s" % self.value("DefaultGateway"))
+            print("Name Server: %s" % self.value("NameServer"))
+
+
+class Interfaces:
+    def __init__(self, directory):
+        system = Registry.Registry(directory + "/SYSTEM")
+        select = system.open("Select")
+        current = select.value("Current").value()
+        self.path = directory
+        self.interfaces = system.open(
+            "ControlSet00%d\Services\Tcpip\Parameters\Interfaces" % (current))
+        self.guids = getGUIDs(directory + "/SOFTWARE")
+
+    def getInterface(self, guid):
+        return Interface(self.interfaces.subkey(guid))
+
+    def printAll(self):
+        print()
+        for guid in self.guids:
+            self.getInterface(guid).printItems()
+            print()

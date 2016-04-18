@@ -32,16 +32,20 @@ class Interface:
         self.__subkeys = system.open(
             "ControlSet00%d\Services\Tcpip\Parameters\Interfaces\%s"
             % (current, guid))
+        self.check = (True if self.__subkeys.values() else False)
 
     def value(self, name):
-        try:
-            return self.__subkeys.value(name).value()[0]
-        except IndexError:
-            return self.__subkeys.value(name).value()
-        except Registry.RegistryValueNotFoundException:
-            pass
-        except Registry.RegistryParse.RegistryStructureDoesNotExist:
-            pass
+        if self.check:
+            try:
+                value_wrap = self.__subkeys.value(name)
+            except Registry.RegistryValueNotFoundException:
+                return None
+            if value_wrap.value_type() == 7:
+                return value_wrap.value()[0]
+            else:
+                return value_wrap.value()
+        else:
+            return None
 
     def print_all(self):
         print("IPAddress: %s" % self.value("IPAddress"))
